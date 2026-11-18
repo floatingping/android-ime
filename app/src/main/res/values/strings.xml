@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">七伯新注音</string>
+    <string name="ime_name">七伯新注音</string>
+    <string name="subtype_name">注音（大千）</string>
+</resources>
