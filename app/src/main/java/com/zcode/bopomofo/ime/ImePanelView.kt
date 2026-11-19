@@ -254,25 +254,33 @@ class ImePanelView(
         val pageLabel = "${c.page + 1}/${c.pageCount}"
         text.textSize = sp(13f)
         text.color = Color.DKGRAY
-        canvas.drawText(pageLabel, width - dp(24f), top + dp(16f), text)
+        canvas.drawText(pageLabel, width - dp(24f), baseline(RectF(0f, top, 0f, top + candH), text), text)
 
-        val slotW = (width - dp(52f)) / 9f
+        val slotW = (width - dp(44f)) / 9f
+        leftText.textSize = sp(22f)
+        val by = baseline(RectF(0f, top, 0f, top + candH), leftText)
         c.pageItems().forEachIndexed { k, item ->
-            val r = RectF(k * slotW + dp(4f), top + dp(5f), (k + 1) * slotW + dp(2f), top + candH - dp(5f))
+            val r = RectF(k * slotW + dp(4f), top + dp(3f), (k + 1) * slotW + dp(2f), top + candH - dp(3f))
             candidateRects += r
             if (c.page * 9 + k == c.index) {
                 fill.color = COLOR_CURSOR
                 canvas.drawRoundRect(r, dp(4f), dp(4f), fill)
             }
+            // 序號在字左邊的留白處，字置中，字與字之間留大間距
             leftText.textSize = sp(22f)
             leftText.color = Color.BLACK
             val cw = leftText.measureText(item)
-            val by = baseline(r, leftText)
-            val start = r.centerX() - (cw + dp(10f)) / 2
-            canvas.drawText(item, start, by, leftText)
+            var charX = r.centerX() - cw / 2
             leftText.textSize = sp(12f)
             leftText.color = COLOR_ACCENT
-            canvas.drawText("${k + 1}", start + cw + dp(1f), by, leftText)
+            val label = "${k + 1}"
+            val numW = leftText.measureText(label)
+            val numX = r.left + dp(1f)
+            if (numX + numW + dp(1f) > charX) charX = numX + numW + dp(1f) // 太窄時字右移，不與序號重叠
+            canvas.drawText(label, numX, by, leftText)
+            leftText.textSize = sp(22f)
+            leftText.color = Color.BLACK
+            canvas.drawText(item, charX, by, leftText)
         }
     }
 

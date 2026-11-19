@@ -131,17 +131,23 @@ class ImeEngine(dict: Dictionary, private val commit: (String) -> Unit) {
         return Result.HANDLED
     }
 
-    // ---- 湊字：上下左右、Enter 無反應；英文、數字等字元插在湊字前，湊字繼續 ----
+    // ---- 湊字：上下左右、Enter 無反應；英文、數字等字元捨棄湊字後照常輸入 ----
 
     private fun handleSyllable(input: KeyInput): Result {
         when (input) {
-            is KeyInput.Printable -> if (startsSyllable(input)) typeSyllable(input.base) else insertLiteral(charFor(input))
-            is KeyInput.Numpad -> insertLiteral(width(input.char))
+            is KeyInput.Printable -> if (startsSyllable(input)) typeSyllable(input.base) else return dropSyllableAndHandle(input)
+            is KeyInput.Numpad -> return dropSyllableAndHandle(input)
             is KeyInput.Space -> { syllable.setTone(Keys.TONE1); completeSyllable() }
             KeyInput.Backspace -> syllable.backspace()
             else -> {}
         }
         return Result.HANDLED
+    }
+
+    /** 英文、數字等字元：捨棄湊字，該鍵改依未輸入（輸入詞中則插在游標處）處理 */
+    private fun dropSyllableAndHandle(input: KeyInput): Result {
+        syllable.clear()
+        return if (cells.isEmpty()) handleIdle(input) else handleComposition(input)
     }
 
     private fun startsSyllable(input: KeyInput.Printable) =

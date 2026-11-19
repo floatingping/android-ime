@@ -188,20 +188,22 @@ class ImeEngineTest {
     }
 
     @Test
-    fun lettersAndDigitsDuringSyllableGoBeforeIt() {
+    fun lettersAndDigitsDuringSyllableCancelIt() {
         type("su3c") // 你 + 湊字中的 ㄏ
-        type("^b") // Shift+b → B，插在 ㄏ 前
+        type("^b") // Shift+b → B：捨棄 ㄏ，B 插在游標處
         engine.handle(KeyInput.Numpad('7'))
-        type("{S}x{S}") // a 模式打 x 再切回
-        assertEquals("你B7x", composition())
-        assertEquals("ㄏ", engine.syllable.display())
-        type("l3")
-        assertEquals("你B7x好", composition())
-        // 未輸入時湊字中打英文：英文在前，進入輸入詞
+        assertEquals("你B7", composition())
+        assertTrue(engine.syllable.isEmpty)
+        type("cl3") // 注音照常湊字
+        assertEquals("你B7好", composition())
+        // 未輸入時湊字中打英文：捨棄 ㄏ，英文直接送出
         type("{E}")
         type("c^a")
-        assertEquals("A", composition())
-        assertEquals("ㄏ", engine.syllable.display())
+        assertEquals("你B7好A", committed.toString())
+        assertFalse(engine.isComposing)
+        type("c{S}q") // a 模式的鍵也一樣
+        assertEquals("你B7好Aq", committed.toString())
+        assertFalse(engine.isComposing)
     }
 
     @Test
@@ -349,11 +351,11 @@ class ImeEngineTest {
         type("su3")
         "3./".forEach { engine.handle(KeyInput.Numpad(it)) }
         assertEquals("你3./", composition())
-        // 湊字中：插在湊字前，湊字不受影響
+        // 湊字中：捨棄湊字，字元照常輸入
         type("c")
         engine.handle(KeyInput.Numpad('3'))
         assertEquals("你3./3", composition())
-        assertEquals("ㄏ", engine.syllable.display())
+        assertTrue(engine.syllable.isEmpty)
         engine.handle(KeyInput.Backspace)
         // 候選字：數字鍵盤 1-9 選字
         type("cl3")
